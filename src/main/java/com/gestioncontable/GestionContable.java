@@ -19,7 +19,7 @@ public class GestionContable {
       System.out.println("||  1. Registrar una transaccion               ||");
       System.out.println("||  2. Mostrar transacciones registradas       ||");
       System.out.println("||  3. Calcular el total de ingresos y egresos ||");
-      System.out.println("||  4. Calcular el balance                     ||");
+      System.out.println("||  4. Calcular el balance general             ||");
       System.out.println("||  5. Cambiar estado de transaccion           ||");
       System.out.println("||  6. Salir                                   ||");
       System.out.println("=================================================");
@@ -30,8 +30,8 @@ public class GestionContable {
       switch (opcion){
         case 1 -> registrarTransaccion(scan);
         case 2 -> mostrarTransacciones();
-        case 3 -> calcularTotalOperaciones(totalIngresos, totalEgresos);
-        case 4 -> calcularBalance(totalIngresos, totalEgresos);
+        case 3 -> calcularTotalOperaciones();
+        case 4 -> calcularBalanceGeneral();
         case 5 -> cambiarEstadoTransaccion(scan);
         case 6 -> {
           System.out.println("=================================================");
@@ -91,19 +91,80 @@ public class GestionContable {
     }
   }
 
-  private static void calcularTotalOperaciones(double totalIngresos, double totalEgresos){
-    System.out.println("=================================================");
-    System.out.println("======= CALCULAR EL TOTAL DE OPERACIONES ========");
-    System.out.println("Total de Ingresos: " + totalIngresos);
-    System.out.println("Total de Egresos: " + totalEgresos);
+  private static void calcularTotalOperaciones() {
+    double totalIngresos = 0;
+    double totalEgresos = 0;
 
+    try (Connection connection = DatabaseConnection.getConnection()) {
+      // Calcular ingresos
+      String sqlIngresos = "SELECT SUM(monto) AS totalIngresos FROM transacciones WHERE UPPER(tipo) = 'INGRESO'";
+      PreparedStatement stmtIngresos = connection.prepareStatement(sqlIngresos);
+      ResultSet rsIngresos = stmtIngresos.executeQuery();
+      if (rsIngresos.next()) {
+        totalIngresos = rsIngresos.getDouble("totalIngresos");
+        if (rsIngresos.wasNull()) {
+          totalIngresos = 0.0;
+        }
+      }
+
+      // Calcular egresos
+      String sqlEgresos = "SELECT SUM(monto) AS totalEgresos FROM transacciones WHERE UPPER(tipo) = 'EGRESO'";
+      PreparedStatement stmtEgresos = connection.prepareStatement(sqlEgresos);
+      ResultSet rsEgresos = stmtEgresos.executeQuery();
+      if (rsEgresos.next()) {
+        totalEgresos = rsEgresos.getDouble("totalEgresos");
+        if (rsEgresos.wasNull()) {
+          totalEgresos = 0.0;
+        }
+      }
+
+      // Imprimir resultados
+      System.out.println("=================================================");
+      System.out.println("====== CALCULANDO EL TOTAL DE OPERACIONES =======");
+      System.out.println("Total de Ingresos: " + totalIngresos);
+      System.out.println("Total de Egresos: " + totalEgresos);
+      System.out.println("=================================================");
+
+    } catch (SQLException e) {
+      System.out.println("Error al calcular totales: " + e.getMessage());
+    }
   }
 
-  private static void calcularBalance(double totalIngresos, double totalEgresos){
-    System.out.println("=================================================");
-    System.out.println("================= CALCULAR EL BALANCE ============");
-    System.out.println("Balance: " + (totalIngresos - totalEgresos));
+  private static void calcularBalanceGeneral() {
+    double totalIngresos = 0;
+    double totalEgresos = 0;
+
+    try (Connection connection = DatabaseConnection.getConnection()) {
+      // Calcular ingresos
+      String sqlIngresos = "SELECT SUM(monto) AS totalIngresos FROM transacciones WHERE tipo = 'Ingreso'";
+      PreparedStatement stmtIngresos = connection.prepareStatement(sqlIngresos);
+      ResultSet rsIngresos = stmtIngresos.executeQuery();
+      if (rsIngresos.next()) {
+        totalIngresos = rsIngresos.getDouble("totalIngresos");
+      }
+
+      // Calcular egresos
+      String sqlEgresos = "SELECT SUM(monto) AS totalEgresos FROM transacciones WHERE tipo = 'Egreso'";
+      PreparedStatement stmtEgresos = connection.prepareStatement(sqlEgresos);
+      ResultSet rsEgresos = stmtEgresos.executeQuery();
+      if (rsEgresos.next()) {
+        totalEgresos = rsEgresos.getDouble("totalEgresos");
+      }
+
+      // Calcular y mostrar balance dentro de este método
+      double balance = totalIngresos - totalEgresos;
+      System.out.println("=================================================");
+      System.out.println("============== BALANCE GENERAL ==================");
+      System.out.println("Total de Ingresos: " + totalIngresos);
+      System.out.println("Total de Egresos: " + totalEgresos);
+      System.out.println("Balance General: " + balance);
+      System.out.println("=================================================");
+
+    } catch (SQLException e) {
+      System.out.println("Error al calcular balance: " + e.getMessage());
+    }
   }
+
 
   private static void cambiarEstadoTransaccion(Scanner scanner){
     System.out.print("Ingrese el ID de la transacción cuyo estado desea cambiar a TRUE: ");
