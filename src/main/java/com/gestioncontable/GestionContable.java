@@ -136,22 +136,28 @@ public class GestionContable {
 
     try (Connection connection = DatabaseConnection.getConnection()) {
       // Calcular ingresos
-      String sqlIngresos = "SELECT SUM(monto) AS totalIngresos FROM transacciones WHERE tipo = 'Ingreso'";
+      String sqlIngresos = "SELECT SUM(monto) AS totalIngresos FROM transacciones WHERE UPPER(tipo) = 'INGRESO'";
       PreparedStatement stmtIngresos = connection.prepareStatement(sqlIngresos);
       ResultSet rsIngresos = stmtIngresos.executeQuery();
       if (rsIngresos.next()) {
         totalIngresos = rsIngresos.getDouble("totalIngresos");
+        if (rsIngresos.wasNull()) {
+          totalIngresos = 0.0;
+        }
       }
 
       // Calcular egresos
-      String sqlEgresos = "SELECT SUM(monto) AS totalEgresos FROM transacciones WHERE tipo = 'Egreso'";
+      String sqlEgresos = "SELECT SUM(monto) AS totalEgresos FROM transacciones WHERE UPPER(tipo) = 'EGRESO'";
       PreparedStatement stmtEgresos = connection.prepareStatement(sqlEgresos);
       ResultSet rsEgresos = stmtEgresos.executeQuery();
       if (rsEgresos.next()) {
         totalEgresos = rsEgresos.getDouble("totalEgresos");
+        if (rsEgresos.wasNull()) {
+          totalEgresos = 0.0;
+        }
       }
 
-      // Calcular y mostrar balance dentro de este método
+      // Calcular y mostrar balance general
       double balance = totalIngresos - totalEgresos;
       System.out.println("=================================================");
       System.out.println("============== BALANCE GENERAL ==================");
@@ -164,7 +170,6 @@ public class GestionContable {
       System.out.println("Error al calcular balance: " + e.getMessage());
     }
   }
-
 
   private static void cambiarEstadoTransaccion(Scanner scanner){
     System.out.print("Ingrese el ID de la transacción cuyo estado desea cambiar a TRUE: ");
